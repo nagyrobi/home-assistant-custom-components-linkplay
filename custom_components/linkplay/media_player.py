@@ -1600,28 +1600,31 @@ class LinkPlayDevice(MediaPlayerEntity):
                     self._source = source_n
                 else:
                     self._source = source_t
+            
+                if self._source != 'Network' and not (self._playing_stream or self._playing_localfile):
+                    if self._source == 'Idle':
+                        self._media_title = None
+                        self._state = STATE_IDLE
+                    else:
+                        self._media_title = self._source
+                        self._state = STATE_PLAYING
+
+                    self._media_artist = None
+                    self._media_album = None
+                    self._media_image_url = None
+                    self._icecast_name = None
             else:
                 self._source = 'Tidal'
-            
-            if self._source != 'Network' and not (self._playing_stream or self._playing_localfile):
-                if self._source == 'Idle':
-                    self._media_title = None
-                    self._state = STATE_IDLE
-                else:
-                    self._media_title = self._source
-                    self._state = STATE_PLAYING
 
-                self._media_artist = None
-                self._media_album = None
-                self._media_image_url = None
-                self._icecast_name = None
-                
             if player_status['mode'] in ['1', '2', '3']:
+                self._state = STATE_PLAYING
                 self._media_title = self._source
-                self._state = STATE_PLAYING
 
-            if self._playing_spotify or self._playing_tidal:
+            if self._playing_spotify:
                 self._state = STATE_PLAYING
+                self._update_via_upnp()
+
+            elif self._playing_tidal:
                 self._update_via_upnp()
 
             else:
