@@ -132,6 +132,7 @@ MAX_VOL = 100
 FW_MROOM_RTR_MIN = '4.2.8020'
 FW_RAKOIT_UART_MIN = '4.2.9326'
 FW_SLOW_STREAMS = '4.6'
+FW_PLAY_PROMPT = '4.6.4151'
 ROOTDIR_USB = '/media/sda1/'
 UUID_ARYLIC = 'FF31F09E'
 TCPPORT = 8899
@@ -1395,22 +1396,22 @@ class LinkPlayDevice(MediaPlayerEntity):
                 else:
                     media_id_final = await self.async_detect_stream_url_redirection(media_id)
 
-                if self._fwvercheck(self._fw_ver) >= self._fwvercheck(FW_SLOW_STREAMS) and self._state == STATE_PLAYING:
-                    await self.call_linkplay_httpapi("setPlayerCmd:pause", None)
-                
-                if self._playing_spotify:  # disconnect from Spotify before playing new http source
-                    await self.call_linkplay_httpapi("setPlayerCmd:switchmode:wifi", None)
+                if media_id_check.find('tts_proxy') != -1 and self._fwvercheck(self._fw_ver) >= self._fwvercheck(FW_PLAY_PROMPT):
+                    value = await self.call_linkplay_httpapi("playPromptUrl:{0}".format(media_id_final), None)
+                    if value != "OK":
+                        _LOGGER.warning("Failed to play TTS media type URL. Device: %s, Got response: %s, Media_Id: %s", self.entity_id, value, media_id)
+                        return False
+                else:
+                    if self._fwvercheck(self._fw_ver) >= self._fwvercheck(FW_SLOW_STREAMS) and self._state == STATE_PLAYING:
+                        await self.call_linkplay_httpapi("setPlayerCmd:pause", None)
 
-                value = await self.call_linkplay_httpapi("setPlayerCmd:play:{0}".format(media_id_final), None)
-                if value != "OK":
-                    _LOGGER.warning("Failed to play media type URL. Device: %s, Got response: %s, Media_Id: %s", self.entity_id, value, media_id)
-                    return False
+                    if self._playing_spotify:  # disconnect from Spotify before playing new http source
+                        await self.call_linkplay_httpapi("setPlayerCmd:switchmode:wifi", None)
 
-            elif media_type in [MEDIA_TYPE_MUSIC, MEDIA_TYPE_TRACK]:
-                value = await self.call_linkplay_httpapi("setPlayerCmd:playLocalList:{0}".format(media_id), None)
-                if value != "OK":
-                    _LOGGER.warning("Failed to play media type music. Device: %s, Got response: %s, Media_Id: %s", self.entity_id, value, media_id)
-                    return False
+                    value = await self.call_linkplay_httpapi("setPlayerCmd:play:{0}".format(media_id_final), None)
+                    if value != "OK":
+                        _LOGGER.warning("Failed to play media type URL. Device: %s, Got response: %s, Media_Id: %s", self.entity_id, value, media_id)
+                        return False
 
             self._state = STATE_PLAYING
             if media_id.find('tts_proxy') != -1:
