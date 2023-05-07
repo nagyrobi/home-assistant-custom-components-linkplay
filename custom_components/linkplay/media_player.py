@@ -236,43 +236,48 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 
     state = STATE_IDLE
 
-    initurl = "http://{0}/httpapi.asp?command=getStatus".format(host)
+    websession = async_get_clientsession(hass)
+    response = None
     
     try:
-        websession = async_get_clientsession(hass)
-        response = await websession.get(initurl)
+        protocol = "http"
+        initurl = "{}://{}/httpapi.asp?command=getStatus"
+        response = await websession.get(initurl.format(protocol,host))
 
-        if response.status == HTTPStatus.OK:
-            data = await response.json(content_type=None)
-            _LOGGER.debug("HOST: %s DATA response: %s", host, data)
+    except (asyncio.TimeoutError, aiohttp.ClientError) as error:
 
-            try:
-                uuid = data['uuid']
-            except KeyError:
-                pass
+        try:
+            protocol = "https"
+            initurl = "{}://{}/httpapi.asp?command=getStatusEx"
+            response = await websession.get(initurl.format(protocol,host), ssl=False)
 
-            if name == None:
-                try:
-                    name = data['DeviceName']
-                except KeyError:
-                    pass
-
-        else:
+        except (asyncio.TimeoutError, aiohttp.ClientError) as error:
             _LOGGER.warning(
-                "Get Status UUID failed, response code: %s Full message: %s",
-                response.status,
-                response,
+                "Failed communicating with LinkPlayDevice (start) '%s': uuid: %s %s", host, uuid, type(error)
             )
             state = STATE_UNAVAILABLE
 
-    except (asyncio.TimeoutError, aiohttp.ClientError) as error:
+    if response and response.status == HTTPStatus.OK:
+        data = await response.json(content_type=None)
+        _LOGGER.debug("HOST: %s DATA response: %s", host, data)
+
+        if 'uuid' in data:
+            uuid = data['uuid']
+
+        if 'DeviceName' in data and name == None:
+            name = data['DeviceName']
+
+    else:
         _LOGGER.warning(
-            "Failed communicating with LinkPlayDevice (start) '%s': uuid: %s %s", host, uuid, type(error)
+            "Get Status UUID failed, response code: %s Full message: %s",
+            response.status,
+            response,
         )
         state = STATE_UNAVAILABLE
 
     linkplay = LinkPlayDevice(name, 
                             host, 
+                            protocol, 
                             sources, 
                             common_sources, 
                             icecast_metadata, 
@@ -291,7 +296,8 @@ class LinkPlayDevice(MediaPlayerEntity):
 
     def __init__(self, 
                  name, 
-                 host, 
+                 host,
+                 protocol, 
                  sources, 
                  common_sources, 
                  icecast_metadata, 
@@ -314,6 +320,7 @@ class LinkPlayDevice(MediaPlayerEntity):
         self._preset_key = 4
         self._name = name
         self._host = host
+        self._protocol = protocol
         self._icon = ICON_DEFAULT
         self._state = state
         self._volume = 0
@@ -397,7 +404,7 @@ class LinkPlayDevice(MediaPlayerEntity):
 
     async def call_linkplay_httpapi(self, cmd, jsn):
         """Get the latest data from HTTPAPI service."""
-        url = "http://{0}/httpapi.asp?command={1}".format(self._host, cmd)
+        url = "{}://{}/httpapi.asp?command={}".format(self._protocol, self._host, cmd)
         
         if self._first_update:
             timeout = 10
@@ -407,7 +414,7 @@ class LinkPlayDevice(MediaPlayerEntity):
         try:
             websession = async_get_clientsession(self.hass)
             async with async_timeout.timeout(timeout):
-                response = await websession.get(url)
+                response = await websession.get(url, ssl=False)
 
         except (asyncio.TimeoutError, aiohttp.ClientError) as error:
             _LOGGER.warning(
@@ -551,7 +558,10 @@ class LinkPlayDevice(MediaPlayerEntity):
             self._unav_throttle = False
             if self._first_update or (self._state == STATE_UNAVAILABLE or self._multiroom_wifidirect):
                 #_LOGGER.debug("03 Update first time getStatus %s, %s", self.entity_id, self._name)
-                device_status = await self.call_linkplay_httpapi("getStatus", True)
+                if self._protocol == "https":
+                    device_status = await self.call_linkplay_httpapi("getStatusEx", True)
+                else:
+                    device_status = await self.call_linkplay_httpapi("getStatus", True)
                 if device_status is not None:
                     if isinstance(device_status, dict):
                         if self._state == STATE_UNAVAILABLE:
