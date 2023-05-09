@@ -57,7 +57,7 @@ media_player:
 ### Configuration Variables
 
 **host:**  
-  *(string)* *(Required)* The IP address of the Linkplay unit.
+  *(string)* *(Required)* The IP address of the Linkplay unit. Note that using a hostname will not work with a few commands, e.g., joining multiroom groups.
 
 **name:**  
   *(string)* *(Required)* Name that Home Assistant will generate the `entity_id` based on. It is also the base of the friendly name seen in the dashboard, but will be overriden by the device name set in the Android app.
