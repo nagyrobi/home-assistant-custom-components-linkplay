@@ -270,7 +270,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     else:
         _LOGGER.warning(
             "Get Status UUID failed, response code: %s Full message: %s",
-            response.status,
+            response.status if response is not None else "Unknown",
             response,
         )
         state = STATE_UNAVAILABLE
