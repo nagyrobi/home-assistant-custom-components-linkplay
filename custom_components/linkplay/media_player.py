@@ -255,6 +255,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
             _LOGGER.warning(
                 "Failed communicating with LinkPlayDevice (start) '%s': uuid: %s %s", host, uuid, type(error)
             )
+            protocol = None
             state = STATE_UNAVAILABLE
 
     if response and response.status == HTTPStatus.OK:
@@ -402,9 +403,13 @@ class LinkPlayDevice(MediaPlayerEntity):
         """Record entity."""
         self.hass.data[DOMAIN].entities.append(self)
 
-    async def call_linkplay_httpapi(self, cmd, jsn):
+    async def call_linkplay_httpapi(self, cmd, jsn, protocol = None):
         """Get the latest data from HTTPAPI service."""
-        url = "{}://{}/httpapi.asp?command={}".format(self._protocol, self._host, cmd)
+        if protocol is None and self._protocol is None:
+            _LOGGER.warning("Protocol not known. Skipping communication with LinkPlayDevice '%s'", self._name)
+            return False
+
+        url = "{}://{}/httpapi.asp?command={}".format(self._protocol if protocol is None else protocol, self._host, cmd)
         
         if self._first_update:
             timeout = 10
@@ -507,6 +512,19 @@ class LinkPlayDevice(MediaPlayerEntity):
 
     async def async_update(self):
         """Update state."""
+
+        # If we couldn't determine our protocol on startup, then attempt to do it now as our speaker might be available
+        if self._protocol is None:
+            device_status = await self.call_linkplay_httpapi("getStatusEx", True, "https")
+            if device_status is not None and device_status != False:
+                self._protocol = "https"
+            else:
+                device_status = await self.call_linkplay_httpapi("getStatus", True, "http")
+                if device_status is not None and device_status != False:
+                    self._protocol = "http"
+                else:
+                    return False
+
         #_LOGGER.debug("01 Start update %s, %s", self.entity_id, self._name)
         if self._master is None:
             self._slave_mode = False
