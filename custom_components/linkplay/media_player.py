@@ -80,6 +80,7 @@ from homeassistant.const import (
     CONF_HOST,
     CONF_NAME,
     CONF_PORT,
+    CONF_PROTOCOL,
     STATE_IDLE,
     STATE_PAUSED,
     STATE_PLAYING,
@@ -200,6 +201,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
         vol.Required(CONF_HOST): cv.string,
         vol.Required(CONF_NAME): cv.string,
+        vol.Optional(CONF_PROTOCOL): vol.In(['http', 'https']),
         vol.Optional(CONF_ICECAST_METADATA, default=DEFAULT_ICECAST_UPDATE): vol.In(['Off', 'StationName', 'StationNameSongTitle']),
         vol.Optional(CONF_MULTIROOM_WIFIDIRECT, default=DEFAULT_MULTIROOM_WIFIDIRECT): cv.boolean,
         vol.Optional(CONF_LEDOFF, default=DEFAULT_LEDOFF): cv.boolean,
@@ -225,6 +227,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 
     name = config.get(CONF_NAME)
     host = config.get(CONF_HOST)
+    protocol = config.get(CONF_PROTOCOL)
     sources = config.get(CONF_SOURCES)
     common_sources = config.get(CONF_COMMONSOURCES)
     icecast_metadata = config.get(CONF_ICECAST_METADATA)
@@ -234,28 +237,36 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     lastfm_api_key = config.get(CONF_LASTFM_API_KEY)
     uuid = config.get(CONF_UUID)
 
+    default_protocol = False
+    if protocol is None:
+        protocol = "http"
+        default_protocol = True
+
     state = STATE_IDLE
 
     websession = async_get_clientsession(hass)
     response = None
     
     try:
-        protocol = "http"
         initurl = "{}://{}/httpapi.asp?command=getStatus"
         response = await websession.get(initurl.format(protocol,host))
 
     except (asyncio.TimeoutError, aiohttp.ClientError) as error:
+        if default_protocol:
+            try:
+                protocol = "https"
+                initurl = "{}://{}/httpapi.asp?command=getStatusEx"
+                response = await websession.get(initurl.format(protocol,host), ssl=False)
 
-        try:
-            protocol = "https"
-            initurl = "{}://{}/httpapi.asp?command=getStatusEx"
-            response = await websession.get(initurl.format(protocol,host), ssl=False)
-
-        except (asyncio.TimeoutError, aiohttp.ClientError) as error:
+            except (asyncio.TimeoutError, aiohttp.ClientError) as error:
+                _LOGGER.warning(
+                    "Failed communicating with LinkPlayDevice (start) '%s': uuid: %s %s", host, uuid, type(error)
+                )
+                state = STATE_UNAVAILABLE
+        else:
             _LOGGER.warning(
                 "Failed communicating with LinkPlayDevice (start) '%s': uuid: %s %s", host, uuid, type(error)
             )
-            protocol = None
             state = STATE_UNAVAILABLE
 
     if response and response.status == HTTPStatus.OK:
