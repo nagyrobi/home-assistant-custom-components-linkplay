@@ -11,13 +11,6 @@ Fully compatible with [Mini Media Player card for Lovelace UI](https://github.co
 * Add the configuration to your configuration.yaml.
 * Restart Home-Assistant again.
 
-**Breaking change from v2:** After upgrading to v3 the configured devices will be re-added to HA with a new unique identifier tied to 
-the hardware UUID of the Linkplay modules, instead of IP address. This will result in having the original
-entity_id of the preiously configured devices _disabled_ and having added as new with entity_id _2 or similar.
-
-This can be easily fixed in Home Assistant, visit your entites list, click the old entity_id and delete it.
-Then click the newly generated entity_id _2 and name it back to what preiously was. Your automations can remain unchanged.
-
 [Support forum](https://community.home-assistant.io/t/linkplay-integration/33878/133)
 
 ### Configuration
