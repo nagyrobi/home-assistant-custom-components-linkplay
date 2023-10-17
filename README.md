@@ -31,6 +31,7 @@ To add Linkplay units to your installation, add the following to your `configura
 media_player:
     - platform: linkplay
       host: 192.168.1.11
+      protocol: https
       name: Sound Room1
       volume_step: 10
       announce_volume_increase: 12
@@ -58,6 +59,9 @@ media_player:
 
 **host:**  
   *(string)* *(Required)* The IP address of the Linkplay unit.
+
+**protocol:**  
+  *(string)* *(Optional)* The protocol used by the device. Can be one of `http` or `https`. If omitted, the player will first try on `https` and if fails will switch to `http`, but that may cause issues when the player becomes unreachable and comes back.
 
 **name:**  
   *(string)* *(Required)* Name that Home Assistant will generate the `entity_id` based on. It is also the base of the friendly name seen in the dashboard, but will be overriden by the device name set in the Android app.
