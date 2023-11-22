@@ -27,7 +27,6 @@ media_player:
       protocol: https
       name: Sound Room1
       volume_step: 10
-      announce_volume_increase: 12
       icecast_metadata: 'StationNameSongTitle'
       multiroom_wifidirect: False
       sources: 
@@ -64,9 +63,6 @@ media_player:
 
 **volume_step:**  
   *(integer)* *(Optional)* Step size in percent to change volume when calling `volume_up` or `volume_down` service against the media player. Defaults to `5`, can be a number between `1` and `25`. 
-  
-**announce_volume_increase:**
-  *(integer)* *(Optional)* Play announcements (typically TTS) with this amount higher volume. Defaults to `15`, can be a number between `0` and `50`.
 
 **sources:**  
   *(list)* *(Optional)* A list with available source inputs on the device. If not specified, the integration will assume that all the supported source input types are present on it:
