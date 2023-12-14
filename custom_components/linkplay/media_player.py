@@ -18,6 +18,7 @@ import binascii
 import urllib.request
 import string
 import aiohttp
+
 from http import HTTPStatus
 from aiohttp.client_exceptions import ClientError
 from aiohttp.hdrs import CONNECTION, KEEP_ALIVE
@@ -1985,16 +1986,17 @@ class LinkPlayDevice(MediaPlayerEntity):
         check_uri = uri
         try:
             while redirect_detect:
-                response_location = requests.head(check_uri, allow_redirects=False, headers={'User-Agent': 'VLC/3.0.16 LibVLC/3.0.16'})
-                #_LOGGER.debug('For: %s detecting URI redirect code: %s', self._name, str(response_location.status_code))
-                if response_location.status_code in [301, 302, 303, 307, 308] and 'Location' in response_location.headers:
-                    #_LOGGER.debug('For: %s detecting URI redirect location: %s', self._name, response_location.headers['Location'])
+                headsession = async_get_clientsession(self.hass)
+                response_location = await headsession.head(check_uri, allow_redirects=False, headers={'User-Agent': 'VLC/3.0.16 LibVLC/3.0.16'})
+                _LOGGER.debug('For: %s detecting URI redirect code: %s', self._name, str(response_location.status))
+                if response_location.status in [301, 302, 303, 307, 308] and 'Location' in response_location.headers:
+                    _LOGGER.debug('For: %s detecting URI redirect location: %s', self._name, response_location.headers['Location']) 
                     check_uri = response_location.headers['Location']
                 else:
-                    #_LOGGER.debug('For: %s detecting URI redirect - result: %s', self._name, check_uri)
+                    _LOGGER.debug('For: %s detecting URI redirect - result: %s', self._name, check_uri)
                     redirect_detect = False
-        except:
-            pass
+        except Exception as error:
+            _LOGGER.debug("Exception:" + str(error))
 
         _LOGGER.debug('For: %s detect URI redirect - to:   %s', self._name, check_uri)
         return check_uri
