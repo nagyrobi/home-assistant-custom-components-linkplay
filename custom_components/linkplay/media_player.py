@@ -39,6 +39,7 @@ import homeassistant.helpers.config_validation as cv
 from homeassistant.components.media_player import (
     PLATFORM_SCHEMA, 
     MediaPlayerEntity,
+    MediaPlayerEntityFeature,
     MediaPlayerDeviceClass,
     BrowseMedia,
 )
@@ -55,22 +56,6 @@ from homeassistant.components.media_player.const import (
     MEDIA_TYPE_TRACK,
     MEDIA_CLASS_DIRECTORY,
     MEDIA_CLASS_MUSIC,
-    SUPPORT_NEXT_TRACK,
-    SUPPORT_PAUSE,
-    SUPPORT_PLAY,
-    SUPPORT_PLAY_MEDIA,
-    SUPPORT_PREVIOUS_TRACK,
-    SUPPORT_SEEK,
-    SUPPORT_BROWSE_MEDIA,
-    SUPPORT_SELECT_SOUND_MODE,
-    SUPPORT_SELECT_SOURCE,
-    SUPPORT_SHUFFLE_SET,
-    SUPPORT_REPEAT_SET,
-    SUPPORT_VOLUME_MUTE,
-    SUPPORT_VOLUME_SET,
-    SUPPORT_VOLUME_STEP,
-    SUPPORT_STOP,
-    SUPPORT_GROUPING,
     REPEAT_MODE_ALL,
     REPEAT_MODE_OFF,
     REPEAT_MODE_ONE,
@@ -998,38 +983,78 @@ class LinkPlayDevice(MediaPlayerEntity):
         return sorted(list(SOUND_MODES.values()))
 
     @property
-    def supported_features(self):
+    def supported_features(self) -> MediaPlayerEntityFeature:
         """Flag media player features that are supported."""
         if self._slave_mode and self._features:
             return self._features
 
         if self._playing_localfile or self._playing_spotify or self._playing_webplaylist:
             if self._state in [STATE_PLAYING, STATE_PAUSED]:
-                self._features = \
-                SUPPORT_SELECT_SOURCE | SUPPORT_SELECT_SOUND_MODE | SUPPORT_PLAY_MEDIA | SUPPORT_GROUPING | SUPPORT_BROWSE_MEDIA | \
-                SUPPORT_VOLUME_SET | SUPPORT_VOLUME_STEP | SUPPORT_VOLUME_MUTE | \
-                SUPPORT_STOP | SUPPORT_PLAY | SUPPORT_PAUSE | \
-                SUPPORT_NEXT_TRACK | SUPPORT_PREVIOUS_TRACK | SUPPORT_SHUFFLE_SET | SUPPORT_REPEAT_SET | SUPPORT_SEEK
+                self._features = (
+                    MediaPlayerEntityFeature.SELECT_SOURCE 
+                    | MediaPlayerEntityFeature.SELECT_SOUND_MODE 
+                    | MediaPlayerEntityFeature.PLAY_MEDIA 
+                    | MediaPlayerEntityFeature.GROUPING 
+                    | MediaPlayerEntityFeature.BROWSE_MEDIA 
+                    | MediaPlayerEntityFeature.VOLUME_SET 
+                    | MediaPlayerEntityFeature.VOLUME_STEP 
+                    | MediaPlayerEntityFeature.VOLUME_MUTE 
+                    | MediaPlayerEntityFeature.STOP 
+                    | MediaPlayerEntityFeature.PLAY 
+                    | MediaPlayerEntityFeature.PAUSE 
+                    | MediaPlayerEntityFeature.NEXT_TRACK 
+                    | MediaPlayerEntityFeature.PREVIOUS_TRACK 
+                    | MediaPlayerEntityFeature.SHUFFLE_SET 
+                    | MediaPlayerEntityFeature.REPEAT_SET 
+                    | MediaPlayerEntityFeature.SEEK
+                )
             else:
-                self._features = \
-                SUPPORT_SELECT_SOURCE | SUPPORT_SELECT_SOUND_MODE | SUPPORT_PLAY_MEDIA | SUPPORT_GROUPING | SUPPORT_BROWSE_MEDIA | \
-                SUPPORT_VOLUME_SET | SUPPORT_VOLUME_STEP | SUPPORT_VOLUME_MUTE | \
-                SUPPORT_STOP | SUPPORT_PLAY | SUPPORT_PAUSE | \
-                SUPPORT_NEXT_TRACK | SUPPORT_PREVIOUS_TRACK | SUPPORT_SHUFFLE_SET | SUPPORT_REPEAT_SET
+                self._features = (
+                    MediaPlayerEntityFeature.SELECT_SOURCE 
+                    | MediaPlayerEntityFeature.SELECT_SOUND_MODE 
+                    | MediaPlayerEntityFeature.PLAY_MEDIA 
+                    | MediaPlayerEntityFeature.GROUPING 
+                    | MediaPlayerEntityFeature.BROWSE_MEDIA 
+                    | MediaPlayerEntityFeature.VOLUME_SET 
+                    | MediaPlayerEntityFeature.VOLUME_STEP 
+                    | MediaPlayerEntityFeature.VOLUME_MUTE 
+                    | MediaPlayerEntityFeature.STOP 
+                    | MediaPlayerEntityFeature.PLAY 
+                    | MediaPlayerEntityFeature.PAUSE 
+                    | MediaPlayerEntityFeature.NEXT_TRACK 
+                    | MediaPlayerEntityFeature.PREVIOUS_TRACK 
+                    | MediaPlayerEntityFeature.SHUFFLE_SET 
+                    | MediaPlayerEntityFeature.REPEAT_SET
+                )
 
         elif self._playing_stream or self._playing_mediabrowser:
-            self._features = \
-            SUPPORT_SELECT_SOURCE | SUPPORT_SELECT_SOUND_MODE | SUPPORT_PLAY_MEDIA | SUPPORT_GROUPING | SUPPORT_BROWSE_MEDIA | \
-            SUPPORT_VOLUME_SET | SUPPORT_VOLUME_STEP | SUPPORT_VOLUME_MUTE | \
-            SUPPORT_STOP | SUPPORT_PLAY | SUPPORT_PAUSE
-            if self._state in [STATE_PLAYING, STATE_PAUSED] and self._playing_mediabrowser:
-                self._features |= SUPPORT_SEEK
+            self._features = (
+                MediaPlayerEntityFeature.SELECT_SOURCE 
+                | MediaPlayerEntityFeature.SELECT_SOUND_MODE 
+                | MediaPlayerEntityFeature.PLAY_MEDIA 
+                | MediaPlayerEntityFeature.GROUPING 
+                | MediaPlayerEntityFeature.BROWSE_MEDIA 
+                | MediaPlayerEntityFeature.VOLUME_SET 
+                | MediaPlayerEntityFeature.VOLUME_STEP 
+                | MediaPlayerEntityFeature.VOLUME_MUTE 
+                | MediaPlayerEntityFeature.STOP 
+                | MediaPlayerEntityFeature.PLAY 
+                | MediaPlayerEntityFeature.PAUSE
+                | MediaPlayerEntityFeature.SEEK
+                )
 
         elif self._playing_liveinput:
-            self._features = \
-            SUPPORT_SELECT_SOURCE | SUPPORT_SELECT_SOUND_MODE | SUPPORT_PLAY_MEDIA | SUPPORT_GROUPING | SUPPORT_BROWSE_MEDIA | \
-            SUPPORT_VOLUME_SET | SUPPORT_VOLUME_STEP | SUPPORT_VOLUME_MUTE | \
-            SUPPORT_STOP
+            self._features = (
+                MediaPlayerEntityFeature.SELECT_SOURCE 
+                | MediaPlayerEntityFeature.SELECT_SOUND_MODE 
+                | MediaPlayerEntityFeature.PLAY_MEDIA 
+                | MediaPlayerEntityFeature.GROUPING 
+                | MediaPlayerEntityFeature.BROWSE_MEDIA 
+                | MediaPlayerEntityFeature.VOLUME_SET 
+                | MediaPlayerEntityFeature.VOLUME_STEP 
+                | MediaPlayerEntityFeature.VOLUME_MUTE 
+                | MediaPlayerEntityFeature.STOP
+                )
 
         return self._features
 
