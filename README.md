@@ -50,7 +50,7 @@ media_player:
 ### Configuration Variables
 
 **host:**  
-  *(string)* *(Required)* The IP address of the Linkplay unit.
+  *(string)* *(Required)* The IP address of the Linkplay unit. Note that using a hostname will not work with a few commands, e.g., joining multiroom groups.
 
 **protocol:**  
   *(string)* *(Optional)* The protocol used by the device. Can be one of `http` or `https`. If omitted, the player will first try on `https` and if fails will switch to `http`, but that may cause issues when the player becomes unreachable and comes back.
