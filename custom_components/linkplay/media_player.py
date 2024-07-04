@@ -311,7 +311,7 @@ class LinkPlayDevice(MediaPlayerEntity):
         self._fw_ver = '1.0.0'
         self._mcu_ver = ''
         requester = AiohttpRequester(UPNP_TIMEOUT)
-        self._factory = UpnpFactory(requester, disable_unknown_out_argument_error=True)
+        self._factory = UpnpFactory(requester)
         self._upnp_device = None
         self._service = None
         self._features = None
