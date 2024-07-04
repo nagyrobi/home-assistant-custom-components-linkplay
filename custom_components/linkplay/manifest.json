@@ -1,7 +1,7 @@
 {
   "domain": "linkplay",
   "name": "Linkplay",
-  "version":"3.1.8",
+  "version":"3.2.2",
   "documentation": "https://github.com/nagyrobi/home-assistant-custom-components-linkplay",
   "issue_tracker": "https://github.com/nagyrobi/home-assistant-custom-components-linkplay/issues",
   "after_dependencies": ["http", "tts", "media_source"],
