@@ -18,6 +18,8 @@ import binascii
 import urllib.request
 import string
 import aiohttp
+import ssl
+import os
 
 from http import HTTPStatus
 from aiohttp.client_exceptions import ClientError
@@ -107,6 +109,8 @@ CONF_MULTIROOM_WIFIDIRECT = 'multiroom_wifidirect'
 CONF_VOLUME_STEP = 'volume_step'
 CONF_LEDOFF = 'led_off'
 CONF_UUID = 'uuid'
+CONF_MTLS_CERT_PATH = 'mtls_cert_path'
+CONF_ENDPOINT_OVERRIDE = 'endpoint_override'
 
 DEFAULT_ICECAST_UPDATE = 'StationName'
 DEFAULT_MULTIROOM_WIFIDIRECT = False
@@ -196,6 +200,13 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_LASTFM_API_KEY): cv.string,
         vol.Optional(CONF_UUID, default=''): cv.string,
         vol.Optional(CONF_VOLUME_STEP, default=DEFAULT_VOLUME_STEP): vol.All(int, vol.Range(min=1, max=25)),
+        vol.Optional(CONF_MTLS_CERT_PATH, default=''): cv.string,
+        vol.Optional(CONF_ENDPOINT_OVERRIDE, default={}): vol.Schema(
+            {
+                vol.Optional('getStatus'): cv.string,
+                vol.Optional('getPlayerStatus'): cv.string,
+            }
+        ),
     }
 )
 
@@ -222,6 +233,8 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     volume_step = config.get(CONF_VOLUME_STEP)
     lastfm_api_key = config.get(CONF_LASTFM_API_KEY)
     uuid = config.get(CONF_UUID)
+    mtls_cert_path: string = config.get(CONF_MTLS_CERT_PATH)
+    endpoints = config.get(CONF_ENDPOINT_OVERRIDE)
 
     default_protocol = False
     if protocol is None:
@@ -231,18 +244,29 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     state = STATE_IDLE
 
     websession = async_get_clientsession(hass)
+
+    ssl_ctx = False
+    if mtls_cert_path is not None:
+        ssl_ctx = ssl.create_default_context(purpose=ssl.Purpose.SERVER_AUTH)
+        ssl_ctx.load_cert_chain(certfile=mtls_cert_path)
+        ssl_ctx.check_hostname = False
+        ssl_ctx.verify_mode = ssl.CERT_NONE
+        websession = async_get_clientsession(hass, verify_ssl = False)
+
     response = None
-    
     try:
-        initurl = "{}://{}/httpapi.asp?command=getStatus"
-        response = await websession.get(initurl.format(protocol,host))
+        cmd = endpoints['getStatus'] if endpoints is not None and 'getStatus' in endpoints else "getStatus"
+        initurl = "{}://{}/httpapi.asp?command={}"
+        response = await websession.get(initurl.format(protocol,host,cmd), ssl=ssl_ctx)
 
     except (asyncio.TimeoutError, aiohttp.ClientError) as error:
         if default_protocol:
             try:
                 protocol = "https"
                 initurl = "{}://{}/httpapi.asp?command=getStatusEx"
-                response = await websession.get(initurl.format(protocol,host), ssl=False)
+                response = await websession.get(initurl.format(protocol,host), ssl=ssl_ctx)
+                endpoints["getStatus"] = "getStatusEx"
+                endpoints["getPlayerStatus"] = "getPlayerStatusEx"
 
             except (asyncio.TimeoutError, aiohttp.ClientError) as error:
                 _LOGGER.warning(
@@ -276,6 +300,8 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     linkplay = LinkPlayDevice(name, 
                             host, 
                             protocol, 
+                            mtls_cert_path, 
+                            endpoints, 
                             sources, 
                             common_sources, 
                             icecast_metadata, 
@@ -296,6 +322,8 @@ class LinkPlayDevice(MediaPlayerEntity):
                  name, 
                  host,
                  protocol, 
+                 mtls_cert_path, 
+                 endpoints, 
                  sources, 
                  common_sources, 
                  icecast_metadata, 
@@ -319,6 +347,8 @@ class LinkPlayDevice(MediaPlayerEntity):
         self._name = name
         self._host = host
         self._protocol = protocol
+        self._mtls_cert_path = mtls_cert_path
+        self._endpoints = endpoints
         self._icon = ICON_DEFAULT
         self._state = state
         self._volume = 0
@@ -406,17 +436,27 @@ class LinkPlayDevice(MediaPlayerEntity):
             _LOGGER.warning("Protocol not known. Skipping communication with LinkPlayDevice '%s'", self._name)
             return False
 
+        cmd = self._endpoints[cmd] if self._endpoints is not None and cmd in self._endpoints else cmd
         url = "{}://{}/httpapi.asp?command={}".format(self._protocol if protocol is None else protocol, self._host, cmd)
-        
+
         if self._first_update:
             timeout = 10
         else:
             timeout = API_TIMEOUT
         
         try:
+            ssl_ctx = False
             websession = async_get_clientsession(self.hass)
+
+            if self._mtls_cert_path is not None:
+                ssl_ctx = ssl.create_default_context(purpose=ssl.Purpose.SERVER_AUTH)
+                ssl_ctx.load_cert_chain(certfile=self._mtls_cert_path)
+                ssl_ctx.check_hostname = False
+                ssl_ctx.verify_mode = ssl.CERT_NONE
+                websession = async_get_clientsession(self.hass, verify_ssl=False)
+            
             async with async_timeout.timeout(timeout):
-                response = await websession.get(url, ssl=False)
+                response = await websession.get(url, ssl=ssl_ctx)
 
         except (asyncio.TimeoutError, aiohttp.ClientError) as error:
             _LOGGER.warning(
