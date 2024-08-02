@@ -11,7 +11,7 @@ To switch tho the official LinkPlay integration starting from **2024.08**, follo
 For any bugs, feature requests, or PRs, please use the official Home Assistant channels.
 
 ---
-For Home Assistant PRE- 2024.08:
+**For Home Assistant PRE- 2024.08:**
 
 This component allows you to integrate control of audio devices based on Linkplay A31 chipset into your [Home Assistant](http://www.home-assistant.io) smart home system. Originally developed by nicjo814, maintained by limych. This version rewritten by nagyrobi. Read more about Linkplay at the bottom of this file.
 
