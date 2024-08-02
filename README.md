@@ -2,8 +2,8 @@
 
 **NOTE: The `linkplay` custom component for Home Assistant is deprecated, and unsupported! Starting with Home Assistant 2024.08 release, Linkplay chipset based media players are officially supported without the need of any custom component.**
 
-To switch tho the official LinkPlay integration starting from **2024.08**, follow these steps:
-* Remove tle current `linkplay` configuration from your configuration.yaml.
+To switch to the official LinkPlay integration starting from **2024.08**, follow these steps:
+* Remove the current `linkplay` configuration from your configuration.yaml.
 * Restart Home-Assistant.
 * Delete the custom component through HACS or manually by deleting the `custom_components/linkplay` folder.
 * Restart Home-Assistant again. Your players will be automatically discovered, a notification popup will inform you on this.
@@ -11,7 +11,7 @@ To switch tho the official LinkPlay integration starting from **2024.08**, follo
 For any bugs, feature requests, or PRs, please use the official Home Assistant channels.
 
 ---
-**For Home Assistant PRE- 2024.08:**
+**For Home Assistant versions before 2024.08:**
 
 This component allows you to integrate control of audio devices based on Linkplay A31 chipset into your [Home Assistant](http://www.home-assistant.io) smart home system. Originally developed by nicjo814, maintained by limych. This version rewritten by nagyrobi. Read more about Linkplay at the bottom of this file.
 
