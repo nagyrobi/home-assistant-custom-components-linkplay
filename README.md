@@ -1,7 +1,8 @@
 # Linkplay-based speakers and sound devices
 
 **NOTE: This custom component is deprecated, and unsupported! Startinng with Home Assistant 2024.08, Linkplay chipset based media players are officially supported without the need of any custom component.**
-To swhict tho the official LinkPlay integration starting from, follow these steps:
+
+To switch tho the official LinkPlay integration starting from 2024.08, follow these steps:
 * Remove tle current `linkplay` configuration to your configuration.yaml.
 * Restart Home-Assistant.
 * Delete the custom component through HACS or manually by deleting the `custom_components/linkplay` folder.
