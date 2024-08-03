@@ -1,5 +1,19 @@
 # Linkplay-based speakers and sound devices
 
+**NOTE: The `linkplay` custom component for Home Assistant is deprecated, and unsupported! Starting with Home Assistant 2024.08 release, Linkplay chipset based media players are officially supported without the need of any custom component.**
+
+To switch to the official LinkPlay integration starting from **2024.08**, follow these steps:
+* Remove the current `linkplay` configuration from your configuration.yaml.
+* Restart Home-Assistant.
+* Delete the custom component through HACS or manually by deleting the `custom_components/linkplay` folder.
+* Restart Home-Assistant again. Your players will be automatically discovered, a notification popup will inform you on this.
+
+For any bugs, feature requests, or PRs, please use the official Home Assistant channels.
+
+---
+
+**For Home Assistant versions before 2024.08:**
+
 This component allows you to integrate control of audio devices based on Linkplay chipset into your [Home Assistant](http://www.home-assistant.io) smart home system. Originally developed by nicjo814, maintained by limych. This version mostly rewritten by nagyrobi. Read more about Linkplay at the bottom of this file.
 
 Fully compatible with Mini Media Player card for Lovelace UI by kalkih, including speaker group management.
